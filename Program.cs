@@ -68,6 +68,33 @@ class Program
             IsRequired = false,
             Arity = ArgumentArity.ZeroOrOne,
         };
+        var typeAccessModifierOption = new Option<string>(
+            "--typeAccessModifier",
+            "The access modifier for generated types (default: 'public')"
+        )
+        {
+            IsRequired = false,
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        typeAccessModifierOption.SetDefaultValue("public");
+        var requiredPropertiesMustBeDefinedOption = new Option<bool>(
+            "--requiredPropertiesMustBeDefined",
+            "Whether required properties must be defined in the schema (default: true)"
+        )
+        {
+            IsRequired = false,
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        requiredPropertiesMustBeDefinedOption.SetDefaultValue(true);
+        var propertySetterAccessModifierOption = new Option<string>(
+            "--propertySetterAccessModifier",
+            "The access modifier for property setters (default: '')"
+        )
+        {
+            IsRequired = false,
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        propertySetterAccessModifierOption.SetDefaultValue(string.Empty);
 
         var rootCommand = new RootCommand("Generate C# classes from a JSON Schema")
         {
@@ -82,6 +109,9 @@ class Program
             jsonLibraryOption,
             useRequiredKeywordOption,
             enforceFlagEnumsOption,
+            typeAccessModifierOption,
+            requiredPropertiesMustBeDefinedOption,
+            propertySetterAccessModifierOption,
         };
 
         rootCommand.Description = "Generate C# classes from JSON schema files";
@@ -113,6 +143,15 @@ class Program
                 useRequiredKeywordOption
             );
             var enforceFlagEnums = context.ParseResult.GetValueForOption(enforceFlagEnumsOption);
+            var typeAccessModifier = context.ParseResult.GetValueForOption(
+                typeAccessModifierOption
+            );
+            var requiredPropertiesMustBeDefined = context.ParseResult.GetValueForOption(
+                requiredPropertiesMustBeDefinedOption
+            );
+            var propertySetterAccessModifier = context.ParseResult.GetValueForOption(
+                propertySetterAccessModifierOption
+            );
 
             async Task<int> HandlerImpl()
             {
@@ -153,6 +192,15 @@ class Program
                         UseRequiredKeyword = useRequiredKeyword,
                         EnforceFlagEnums = enforceFlagEnums,
                     };
+                    if (typeAccessModifier != null)
+                    {
+                        settings.TypeAccessModifier = typeAccessModifier;
+                    }
+                    if (propertySetterAccessModifier != null)
+                    {
+                        settings.PropertySetterAccessModifier = propertySetterAccessModifier;
+                    }
+                    settings.RequiredPropertiesMustBeDefined = requiredPropertiesMustBeDefined;
 
                     var generator = new CSharpGenerator(schema, settings);
                     var codeFile = generator.GenerateFile();
